@@ -1,3 +1,5 @@
+package PSO;
+
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
@@ -14,7 +16,7 @@ public class PSOCloudSimExample {
     private static int vmNum = 10;
 
     public static void main(String[] args) {
-        Log.printLine("Starting PSO CloudSim Example...");
+        Log.printLine("Starting PSO.PSO CloudSim Example...");
 
         try {
             // Initialize the CloudSim package
@@ -26,7 +28,7 @@ public class PSOCloudSimExample {
             // Create Datacenter
             Datacenter datacenter0 = createDatacenter("Datacenter_0");
 
-            // Create PSO instance
+            // Create PSO.PSO instance
             PSO pso = new PSO(20, 100, 0.7, 1.5, 1.5);
 
             // Create Broker
@@ -53,10 +55,10 @@ public class PSOCloudSimExample {
             List<Cloudlet> newList = broker.getCloudletReceivedList();
             printCloudletList(newList);
 
-            // Print the best solution found by PSO
+            // Print the best solution found by PSO.PSO
             printPSOSolution((PSODatacenterBroker) broker);
 
-            Log.printLine("PSO CloudSim Example finished!");
+            Log.printLine("PSO.PSO CloudSim Example finished!");
         } catch (Exception e) {
             e.printStackTrace();
             Log.printLine("The simulation has been terminated due to an unexpected error");
@@ -184,7 +186,7 @@ public class PSOCloudSimExample {
     private static void printPSOSolution(PSODatacenterBroker broker) {
         List<Integer> bestSolution = broker.getBestSolution();
         Log.printLine();
-        Log.printLine("PSO Best Solution:");
+        Log.printLine("PSO.PSO Best Solution:");
         Log.printLine("Cloudlet ID" + "\t" + "VM ID");
         for (int i = 0; i < bestSolution.size(); i++) {
             Log.printLine(i + "\t\t" + bestSolution.get(i));

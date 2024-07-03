@@ -1,3 +1,5 @@
+package PSO;
+
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
@@ -29,10 +31,10 @@ public class PSODatacenterBroker extends DatacenterBroker {
 
     @Override
     protected void submitCloudlets() {
-        // Run PSO to get the best task-to-VM mapping
+        // Run PSO.PSO to get the best task-to-VM mapping
         bestSolution = pso.optimize(getCloudletList(), getVmList());
 
-        // Assign cloudlets to VMs based on PSO solution
+        // Assign cloudlets to VMs based on PSO.PSO solution
         for (int i = 0; i < getCloudletList().size(); i++) {
             Cloudlet cloudlet = getCloudletList().get(i);
             Vm vm = getVmList().get(bestSolution.get(i));
