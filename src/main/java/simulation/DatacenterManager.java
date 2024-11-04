@@ -1,70 +1,128 @@
 package simulation;
 
 import org.cloudbus.cloudsim.*;
-import org.cloudbus.cloudsim.core.CloudSim;
-import org.cloudbus.cloudsim.provisioners.*;
+import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
+import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
+import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
+
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class DatacenterManager {
+    private Map<String, Datacenter> datacenters;
+    private Map<String, List<Host>> hostsByDatacenter;
 
-    /**
-     * Creates a datacenter with specified hosts.
-     *
-     * @param name The name of the datacenter.
-     * @return The created Datacenter object.
-     */
-    public Datacenter createDatacenter(String name) {
-        // List to store hosts
-        List<Host> hostList = new ArrayList<>();
+    public DatacenterManager() {
+        this.datacenters = new HashMap<>();
+        this.hostsByDatacenter = new HashMap<>();
+    }
 
-        // Define the number of processing elements (PE) per host
-        int peCount = 4;
-        List<Pe> peList = new ArrayList<>();
-        for (int i = 0; i < peCount; i++) {
-            peList.add(new Pe(i, new PeProvisionerSimple(1000))); // 1000 MIPS per PE
-        }
+    public Datacenter createDatacenter(
+            String name,
+            int numHosts,
+            int numCoresPerHost,
+            int mipsPerCore,
+            int ramPerHost,
+            long storagePerHost,
+            int bwPerHost) throws Exception {
 
-        // Define host specifications
-        int ram = 16384; // in MB
-        long storage = 1000000; // in MB
-        int bw = 10000; // in MB/s
-
-        // Create a host with the above specifications
-        Host host = new Host(
-                0,
-                new RamProvisionerSimple(ram),
-                new BwProvisionerSimple(bw),
-                storage,
-                peList,
-                new VmSchedulerTimeShared(peList)
+        List<Host> hostList = createHosts(
+                numHosts,
+                numCoresPerHost,
+                mipsPerCore,
+                ramPerHost,
+                storagePerHost,
+                bwPerHost
         );
 
-        hostList.add(host);
-
-        // Define datacenter characteristics
-        String arch = "x86"; // architecture
-        String os = "Linux"; // operating system
+        // Create Datacenter characteristics
+        String arch = "x86";
+        String os = "Linux";
         String vmm = "Xen";
-        double time_zone = 10.0;
-        double cost = 3.0;
+        double timeZone = 10.0;
+        double costPerSec = 3.0;
         double costPerMem = 0.05;
         double costPerStorage = 0.001;
         double costPerBw = 0.0;
 
         DatacenterCharacteristics characteristics = new DatacenterCharacteristics(
-                arch, os, vmm, hostList, time_zone, cost, costPerMem, costPerStorage, costPerBw
+                arch, os, vmm, hostList, timeZone, costPerSec,
+                costPerMem, costPerStorage, costPerBw
         );
 
-        // Create the datacenter
-        Datacenter datacenter = null;
-        try {
-            datacenter = new Datacenter(name, characteristics, new VmAllocationPolicySimple(hostList), new ArrayList<Storage>(), 0);
-            System.out.println("Datacenter " + name + " created successfully.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Datacenter datacenter = new Datacenter(
+                name,
+                characteristics,
+                new VmAllocationPolicySimple(hostList),
+                new LinkedList<Storage>(),
+                0
+        );
+
+        this.datacenters.put(name, datacenter);
+        this.hostsByDatacenter.put(name, hostList);
 
         return datacenter;
+    }
+
+    private List<Host> createHosts(
+            int numHosts,
+            int numCoresPerHost,
+            int mipsPerCore,
+            int ramPerHost,
+            long storagePerHost,
+            int bwPerHost) {
+
+        List<Host> hostList = new ArrayList<>();
+
+        for (int hostId = 0; hostId < numHosts; hostId++) {
+            // Create PEs (CPU cores)
+            List<Pe> peList = new ArrayList<>();
+            for (int coreId = 0; coreId < numCoresPerHost; coreId++) {
+                peList.add(new Pe(coreId, new PeProvisionerSimple(mipsPerCore)));
+            }
+
+            Host host = new Host(
+                    hostId,
+                    new RamProvisionerSimple(ramPerHost),
+                    new BwProvisionerSimple(bwPerHost),
+                    storagePerHost,
+                    peList,
+                    new VmSchedulerTimeShared(peList)
+            );
+
+            hostList.add(host);
+        }
+
+        return hostList;
+    }
+
+    public List<Host> getHostsForDatacenter(String datacenterName) {
+        return hostsByDatacenter.get(datacenterName);
+    }
+
+    public Datacenter getDatacenter(String name) {
+        return datacenters.get(name);
+    }
+
+    public Map<String, Datacenter> getAllDatacenters() {
+        return new HashMap<>(datacenters);
+    }
+
+    public int getTotalHostCount() {
+        return hostsByDatacenter.values()
+                .stream()
+                .mapToInt(List::size)
+                .sum();
+    }
+
+    public int getTotalCoreCount() {
+        return hostsByDatacenter.values()
+                .stream()
+                .flatMap(List::stream)
+                .mapToInt(host -> host.getPeList().size())
+                .sum();
     }
 }
